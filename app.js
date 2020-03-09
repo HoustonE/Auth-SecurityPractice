@@ -6,11 +6,11 @@ Authentication and Security Practice
 
 //jshint esversion:6
 require('dotenv').config();
+var md5 = require('md5');
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encryption = require("mongoose-encryption");
 const dotenv = require('dotenv');
 
 const app = express();
@@ -37,7 +37,6 @@ const userSchema =  new mongoose.Schema({
   password: String
 });
 
-userSchema.plugin(encryption, {secret: process.env.SECRET, encryptedFields: ['password']});
 
 const User = new mongoose.model("User", userSchema);
 
@@ -57,7 +56,7 @@ app.route("/login")
   })
   .post(function(req, resp) {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     //Search for Usernamw
     //  - if exists -> check if password matches -> if match -> render secrets page
@@ -90,7 +89,7 @@ app.route("/register")
   .post(function(req, resp) {
     const newUser = new User({
       email: req.body.username,
-      password: req.body.password
+      password: md5(req.body.password)
     });
     newUser.save(function(err) {
       if (err) {
