@@ -6,7 +6,9 @@ Authentication and Security Practice
 
 //jshint esversion:6
 require('dotenv').config();
-var md5 = require('md5');
+// var md5 = require('md5');
+const bcrypt = require('bcrypt');
+const saltRounds = 5;
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -32,7 +34,7 @@ mongoose.connect("mongodb://localhost:27017/SecretsDB", {
 
 // ---- USERDB
 
-const userSchema =  new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   email: String,
   password: String
 });
@@ -56,7 +58,7 @@ app.route("/login")
   })
   .post(function(req, resp) {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     //Search for Usernamw
     //  - if exists -> check if password matches -> if match -> render secrets page
@@ -68,11 +70,13 @@ app.route("/login")
         console.log(err);
       } else {
         if (foundUser) {
-          if (foundUser.password === password) {
-            resp.render("secrets");
-          } else {
-            console.log("Incorrect Password entered");
-          }
+          bcrypt.compare(password, foundUser.password, function(err, result){
+            if(result === true){
+              resp.render("secrets");
+            } else {
+              console.log("Incorrect Password entered");
+            }
+          });
         } else {
           console.log("Incorrect Username or Password");
         }
@@ -87,17 +91,20 @@ app.route("/register")
     resp.render("register");
   })
   .post(function(req, resp) {
-    const newUser = new User({
-      email: req.body.username,
-      password: md5(req.body.password)
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+      const newUser = new User({
+        email: req.body.username,
+        password: hash
+      });
+      newUser.save(function(err) {
+        if (err) {
+          console.log(err);
+        } else {
+          resp.render("secrets");
+        }
+      });
     });
-    newUser.save(function(err) {
-      if (err) {
-        console.log(err);
-      } else {
-        resp.render("secrets");
-      }
-    });
+
   });
 
 
