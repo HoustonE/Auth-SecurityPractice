@@ -40,7 +40,7 @@ app.use(passport.session());
 
 
 //DB stuff
-mongoose.connect("mongodb://localhost:27017/SecretsDB", {
+mongoose.connect("mongodb+srv://admin-HuStone:"+process.env.DBPASS+"@hustoneclust-ln4su.mongodb.net/secretsDB", {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
@@ -246,7 +246,11 @@ app.route("/submit")
   });
 
 
+  let port = process.env.PORT;
+  if (port == null || port == "") {
+    port = 3000;
+  }  
 
-app.listen(3000, function() {
-  console.log("Server started on port 3000.");
-});
+  app.listen(port, function() {
+    console.log("Server started successfully");
+  });
